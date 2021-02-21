@@ -12,32 +12,27 @@
         </style>
     </head>
     <body>
-        <div id="request-permission-container">
-            <button id='request-permission'>start marble time!</button>
-        </div>
-        <div id='coords-x'></div>
-        <div id='coords-y'></div>
+        <button id='request-permission'>start marble time!</button>
         <div id='currentState'></div>
         <div id='currX'></div>
         <div id='currY'></div>
         <div id="ball"></div>
-          
-        <pre class="output"></pre>
     </body>
     <script>
     document.getElementById('request-permission').onclick = () => {
-    if (typeof DeviceMotionEvent.requestPermission === 'function') {
-        DeviceMotionEvent.requestPermission()
-            .then(permissionState => {
-                if (permissionState === 'granted') {
-                    //window.addEventListener('devicemotion', deviceMotionHandler);
-                    window.addEventListener('deviceorientation', deviceMotionHandler);
-                    
-                }
-            })
-            .catch(console.error);
+        if (typeof DeviceMotionEvent.requestPermission === 'function') {
+            DeviceMotionEvent.requestPermission()
+                .then(permissionState => {
+                    if (permissionState === 'granted') {
+                        //window.addEventListener('devicemotion', deviceMotionHandler);
+                        window.addEventListener('deviceorientation', deviceMotionHandler);
+
+                    }
+                })
+                .catch(console.error);
         } else {
             // handle regular non iOS 13+ devices
+            document.getElementById('currentState').innerHTML = "only iOS 13+ supported";
         }
     }
 
@@ -83,15 +78,15 @@
     const deviceMotionHandler = e => {
         const { beta, gamma } = e;
         const currentState = getCurrentState(beta, gamma);
-        document.getElementById('coords-x').innerHTML = `currX: ${currX}, gamma: ${Math.round(gamma * 10) / 10}`;
-        document.getElementById('coords-y').innerHTML = `currY: ${currY}, beta: ${Math.round(beta * 10) / 10}`;
+        document.getElementById('currX').innerHTML = `currX: ${currX}, gamma: ${Math.round(gamma * 10) / 10}`;
+        document.getElementById('currY').innerHTML = `currY: ${currY}, beta: ${Math.round(beta * 10) / 10}`;
         document.getElementById('currentState').innerHTML = `currentState: ${currentState}`;
 
         currX += gamma;
         if (currX < 0) currX = 0;
         else if (currX > maxX) currX = maxX;
 
-        currY += beta
+        currY += beta;
         if (currY < 0) currY = 0;
         else if (currY > maxY) currY = maxY;
 
