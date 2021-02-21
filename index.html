@@ -2,18 +2,7 @@
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
-            #marble {
-                position: absolute;
-            }
-            .garden {
-                position: relative;
-                width : 200px;
-                height: 200px;
-                border: 5px solid #CCC;
-                border-radius: 10px;
-            }
-
-            .ball {
+            #ball {
                 position: absolute;
                 top   : 90px;
                 left  : 90px;
@@ -25,19 +14,16 @@
         </style>
     </head>
     <body>
-        <div id="marble">
-            O
-        </div>
         <div id="request-permission-container">
             <button id='request-permission'>start marble time!</button>
         </div>
         <div id='coords-x'></div>
         <div id='coords-y'></div>
         <div id='coords-z'></div>
-        <div class="garden">
-            <div class="ball"></div>
-          </div>
-
+        <div id='currX'></div>
+        <div id='currY'></div>
+        <div id="ball"></div>
+          
         <pre class="output"></pre>
     </body>
     <script>
@@ -47,7 +33,7 @@
             .then(permissionState => {
                 if (permissionState === 'granted') {
                     window.addEventListener('devicemotion', deviceMotionHandler);
-
+                    
                 }
             })
             .catch(console.error);
@@ -56,54 +42,12 @@
         }
     }
 
-    const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
-    const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
-    const MULTIPLIER = 5;
-
-    const marble = document.getElementById('marble');
-    marble.style = `left: ${vw/2}; top: ${vh/2}`;
-    const deviceMotionHandler = e => {
-        const { x, y, z } = e.acceleration;
-        document.getElementById('coords-x').innerHTML = `x: ${x}`;
-        document.getElementById('coords-y').innerHTML = `y: ${y}`
-        document.getElementById('coords-z').innerHTML = `z: ${z}`
-
-        const current = marble.getBoundingClientRect();
-        let newX = current.x - x * MULTIPLIER;
-        if (newX < 0) {
-            newX = vw;
-        } else if (newX > vw) {
-            newX = 0;
-        }
-        let newY = current.y - y * MULTIPLIER;
-        if (newY < 0) {
-            newY = vh;
-        } else if (newY > vh) {
-            newY = 0;
-        }
-        marble.style = `left: ${newX}; top: ${newY}`;
-    }
-
-    var ball   = document.querySelector('.ball');
-    var garden = document.querySelector('.garden');
-    var output = document.querySelector('.output');
-
-    var maxX = garden.clientWidth  - ball.clientWidth;
-    var maxY = garden.clientHeight - ball.clientHeight;
-
-    const states = {
-        TILT_FORWARD: 'tilt_forward',
-        TILT_BACK: 'tilt_back',
-        TILT_LEFT: 'tilt_left',
-        TILT_RIGHT: 'tilt_right',
-        NEUTRAL: 'neutral'
-    }
 
     const THRESHOLD = 15;
     const THRESHOLD_X = THRESHOLD;
     const THRESHOLD_Y = THRESHOLD;
 
-    const currentState = (x, y) => {
+    const getCurrentState = (x, y) => {
         const neutral_x = x > -1 * THRESHOLD_X && x < THRESHOLD_X;
         const neutral_y = y > -1 * THRESHOLD_Y && y < THRESHOLD_Y;
         const tiltForward = x < -1 * THRESHOLD_X;
@@ -116,7 +60,65 @@
         else if (tiltRight) return states.TILT_RIGHT;
         else if (tiltForward) return states.TILT_FORWARD;
         else if (tiltBack) return states.TILT_BACK;
+        else throw Error("UNKNOWN_STATE");
     }
+
+    const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
+    const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
+    const MULTIPLIER = 1;
+
+    let currX = vw/2;
+    let currY = vh/2;
+
+    const marble = document.getElementById('ball');
+    marble.style = `left: ${currX}; top: ${currY}`;
+
+    const deviceMotionHandler = e => {
+        //const { x, y, z } = e.acceleration;
+        // beta is forward/back [-90, 90] y 
+        // gamma is left/right [-90, 90] x
+        const { beta, gamma } = e.rotationRate;
+        // console.log('beta', beta, 'gamma', gamma);
+        //document.getElementById('coords-x').innerHTML = `x: ${x}`;
+        //document.getElementById('coords-y').innerHTML = `y: ${y}`;
+
+        // const current = marble.getBoundingClientRect();
+        let newX = currX + gamma;
+        document.getElementById('coords-x').innerHTML = `currX: ${currX}, newX: ${newX}`;
+        if (newX < 0) {
+            newX = 0;
+        } else if (newX > vw) {
+            newX = vw;
+        }
+
+        let newY = currY + beta;
+        
+        if (newY < 0) {
+            newY = 0;
+        } else if (newY > vh) {
+            newY = vh;
+        }
+        currY = newY;
+        currX = newX;
+        marble.style = `left: ${newX}px; top: ${newY}px`;
+    }
+
+    /* .      */
+
+    var ball   = document.querySelector('#ball');
+    var output = document.querySelector('.output');
+
+    var maxX = vw  - ball.clientWidth;
+    var maxY = vh - ball.clientHeight;
+
+    const states = {
+        TILT_FORWARD: 'tilt_forward',
+        TILT_BACK: 'tilt_back',
+        TILT_LEFT: 'tilt_left',
+        TILT_RIGHT: 'tilt_right',
+        NEUTRAL: 'neutral'
+    }
+
 
     function handleOrientation(event) {
         var x = event.beta;  // In degree in the range [-180,180)
@@ -124,7 +126,9 @@
 
         output.textContent  = `beta : ${x}\n`;
         output.textContent += `gamma: ${y}\n`;
-        output.textContent += `currentState: ${currentState(x, y)}\n`;
+        output.textContent += `getCurrentState: ${getCurrentState(x, y)}\n`;
+        output.textContent += `currX: ${currX}\n`;
+        output.textContent += `currY: ${currY}\n`;
 
         // Because we don't want to have the device upside down
         // We constrain the x value to the range [-90,90]
@@ -138,8 +142,8 @@
 
         // 10 is half the size of the ball
         // It center the positioning point to the center of the ball
-        ball.style.top  = (maxY*y/180 - 10) + "px";
-        ball.style.left = (maxX*x/180 - 10) + "px";
+        //ball.style.top  = (maxY*y/180 - 10) + "px";
+        //ball.style.left = (maxX*x/180 - 10) + "px";
     }
 
     window.addEventListener('deviceorientation', handleOrientation);
