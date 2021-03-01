@@ -1,28 +1,39 @@
 <html>
-<button id="startVibrate">start vibration</button>
-<script>
-var vibrateInterval;
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+    <button id="startVibrate">start vibration</button>
+    <div id="status"></div>
+    <script>
+    var vibrateInterval;
 
-// Starts vibration at passed in level
-function startVibrate(duration) {
-    navigator.vibrate(duration);
-}
+    // Starts vibration at passed in level
+    function startVibrate(duration) {
+        const statusDiv = document.getElementById('status');
+        statusDiv.innerHTML = "starting to vibrate"
+        try {
+            window.navigator.vibrate(duration);
+        } catch (e) {
+            statusDiv.innerHTML = e.toString();
+        }
+    }
 
-// Stops vibration
-function stopVibrate() {
-    // Clear interval and stop persistent vibrating
-    if(vibrateInterval) clearInterval(vibrateInterval);
-    navigator.vibrate(0);
-}
+    // Stops vibration
+    function stopVibrate() {
+        // Clear interval and stop persistent vibrating
+        if(vibrateInterval) clearInterval(vibrateInterval);
+        window.navigator.vibrate(0);
+    }
 
-// Start persistent vibration at given duration and interval
-// Assumes a number value is given
-function startPersistentVibrate(duration, interval) {
-    vibrateInterval = setInterval(function() {
-        startVibrate(duration);
-    }, interval);
-}
+    // Start persistent vibration at given duration and interval
+    // Assumes a number value is given
+    function startPersistentVibrate(duration, interval) {
+        vibrateInterval = setInterval(function() {
+            startVibrate(duration);
+        }, interval);
+    }
 
-document.getElementById('startVibrate').onclick = startVibrate;
-</script>
+    const startVibrateButton = document.getElementById('startVibrate');
+    startVibrateButton.addEventListener("click", startVibrate);
+    </script>
 </html>
