@@ -30,6 +30,7 @@
                     }
                 })
                 .catch(console.error);
+            toggleFullScreen();
         } else {
             // handle regular non iOS 13+ devices
             document.getElementById('currentState').innerHTML = "only iOS 13+ supported";
@@ -94,5 +95,14 @@
     }
 
     window.addEventListener('deviceorientation', deviceMotionHandler);
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+        } else {
+            if (document.exitFullscreen) {
+            document.exitFullscreen();
+            }
+        }
+    }
     </script>
 </html>
